@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Image from 'next/image';
-import { Home, Upload, Eye, Clock, TestTube, FileImage, CheckCircle2, Info } from 'lucide-react';
+import { Home, Upload, Eye, Clock, TestTube, Settings } from 'lucide-react';
 
 interface TestResult {
   success: boolean;
@@ -15,11 +15,40 @@ interface TestResult {
   processingTime?: number;
 }
 
+interface ModelInfo {
+  modelName: string;
+  requestFormat: string;
+  status: 'verified' | 'pending' | 'failed';
+}
+
 export default function TestPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
+  const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
+
+  // 获取模型信息
+  useEffect(() => {
+    const loadModelInfo = async () => {
+      try {
+        const response = await fetch('/api/model-info');
+        const result = await response.json();
+        
+        if (result.success) {
+          setModelInfo({
+            modelName: result.modelName,
+            requestFormat: result.requestFormat,
+            status: result.status,
+          });
+        }
+      } catch (error) {
+        console.error('获取模型信息失败:', error);
+      }
+    };
+
+    loadModelInfo();
+  }, []);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -255,84 +284,50 @@ export default function TestPage() {
             </Card>
           </div>
 
-          {/* 使用说明 */}
-          <Card className="bg-gradient-to-r from-gray-50 to-white border-2 border-gray-100 shadow-lg">
-            <CardHeader className="pb-6">
-              <CardTitle className="text-center text-2xl text-gray-800 flex items-center justify-center">
-                <Info className="w-6 h-6 mr-3" />
-                使用说明
+          {/* 模型信息 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Settings className="w-5 h-5 mr-2" />
+                模型信息
               </CardTitle>
-              <CardDescription className="text-center text-gray-600">
-                了解如何获得最佳的验证码识别效果
+              <CardDescription>
+                当前验证码识别模型的配置状态
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-8">
-                {/* 支持格式 */}
-                <div>
-                  <div className="text-center mb-4">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full mb-3">
-                      <FileImage className="w-8 h-8 text-gray-600" />
-                    </div>
-                    <h3 className="font-bold text-lg text-gray-800 mb-2">支持的图片格式</h3>
+              {modelInfo ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-gray-600 font-medium">模型名称:</span>
+                    <span className="text-gray-800 font-bold">{modelInfo.modelName}</span>
                   </div>
                   
-                  <div className="space-y-3">
-                    <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
-                      <div className="w-3 h-3 bg-gray-800 rounded-full mr-3 flex-shrink-0"></div>
-                      <span className="text-gray-700 font-medium">PNG 格式</span>
-                    </div>
-                    <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
-                      <div className="w-3 h-3 bg-gray-800 rounded-full mr-3 flex-shrink-0"></div>
-                      <span className="text-gray-700 font-medium">JPG/JPEG 格式</span>
-                    </div>
-                    <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
-                      <div className="w-3 h-3 bg-gray-600 rounded-full mr-3 flex-shrink-0"></div>
-                      <span className="text-gray-700 font-medium">文件大小不超过 5MB</span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* 最佳效果 */}
-                <div>
-                  <div className="text-center mb-4">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full mb-3">
-                      <CheckCircle2 className="w-8 h-8 text-gray-600" />
-                    </div>
-                    <h3 className="font-bold text-lg text-gray-800 mb-2">识别效果最佳的图片</h3>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
-                      <div className="w-3 h-3 bg-gray-800 rounded-full mr-3 flex-shrink-0"></div>
-                      <span className="text-gray-700 font-medium">图片清晰，文字易读</span>
-                    </div>
-                    <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
-                      <div className="w-3 h-3 bg-gray-800 rounded-full mr-3 flex-shrink-0"></div>
-                      <span className="text-gray-700 font-medium">验证码字符较大</span>
-                    </div>
-                    <div className="flex items-center p-3 bg-white rounded-lg border border-gray-200">
-                      <div className="w-3 h-3 bg-gray-800 rounded-full mr-3 flex-shrink-0"></div>
-                      <span className="text-gray-700 font-medium">背景与文字对比度高</span>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-gray-600 font-medium">运行状态:</span>
+                    <div className="flex items-center">
+                      <div className={`w-3 h-3 rounded-full mr-2 ${
+                        modelInfo.status === 'verified' ? 'bg-green-500' :
+                        modelInfo.status === 'pending' ? 'bg-yellow-500' :
+                        'bg-red-500'
+                      }`}></div>
+                      <span className={`font-medium ${
+                        modelInfo.status === 'verified' ? 'text-green-600' :
+                        modelInfo.status === 'pending' ? 'text-yellow-600' :
+                        'text-red-600'
+                      }`}>
+                        {modelInfo.status === 'verified' ? '已验证' :
+                         modelInfo.status === 'pending' ? '待验证' : '配置错误'}
+                      </span>
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              {/* 底部提示 */}
-              <div className="mt-8 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
-                <div className="flex items-start">
-                  <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
-                    <span className="text-white text-xs font-bold">!</span>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-700 font-medium mb-1">温馨提示</p>
-                    <p className="text-sm text-gray-600">
-                      为了获得最佳识别效果，建议上传清晰、对比度高的验证码图片。模型支持英文、数字和简单符号的识别。
-                    </p>
-                  </div>
+              ) : (
+                <div className="text-center text-gray-500 py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-300 border-t-gray-600 mx-auto mb-2"></div>
+                  正在加载...
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 
