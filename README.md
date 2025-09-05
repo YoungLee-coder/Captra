@@ -40,15 +40,6 @@
    cp env.example .env.local
    ```
    
-   编辑 `.env.local` 文件：
-   ```env
-   ADMIN_PASSWORD=your-secure-password
-   API_URL=https://api.openai.com/v1/chat/completions
-   API_KEY=your-api-key
-   MODEL_NAME=gpt-4o-mini
-   REQUEST_FORMAT=openai
-   ```
-
 4. **启动服务**
    ```bash
    pnpm dev
@@ -81,10 +72,82 @@
 - **在线测试**: 上传验证码图片即时测试
 - **后台管理**: 模型配置、状态监控和测试
 
-## 🤖 支持的模型
+## ⚙️ 环境变量配置
 
-**OpenAI**: GPT-4o, GPT-4o-mini, GPT-4 Vision  
-**Anthropic**: Claude-3.5 Sonnet, Claude-3 Opus, Claude-3 Haiku
+### 必需配置
+| 变量名 | 说明 | 示例值 |
+|--------|------|--------|
+| `ADMIN_PASSWORD` | 后台管理密码 | `admin123` |
+| `API_KEY` | 大模型 API 密钥 | `sk-xxx...` 或 `sk-ant-xxx...` |
+
+### 模型配置
+| 变量名 | 说明 | 默认值 | 可选值 |
+|--------|------|--------|--------|
+| `API_URL` | API 请求地址 | `https://api.openai.com/v1/chat/completions` | OpenAI 或其他兼容的 API 端点 |
+| `MODEL_NAME` | 模型名称 | `gpt-4o-mini` | `gpt-4o`, `gpt-4o-mini`, `claude-3-5-sonnet-20241022` 等 |
+| `REQUEST_FORMAT` | 请求格式 | `openai` | `openai`, `anthropic` |
+
+### 高级配置
+| 变量名 | 说明 | 默认值 | 示例 |
+|--------|------|--------|------|
+| `THINKING_MODE` | 思考模式参数（可选） | 空 | `disabled`, `enabled` |
+| `NEXTAUTH_SECRET` | 会话密钥 | `default-secret` | 随机生成的安全字符串 |
+| `NEXTAUTH_URL` | 应用地址 | `http://localhost:3000` | 生产环境的完整域名 |
+
+### 配置说明
+
+#### 思考模式 (THINKING_MODE)
+- **作用**: 为支持深度思考的模型添加思考模式参数
+- **使用**: 设置后会在 API 请求中添加 `thinking` 字段
+- **示例**:
+  ```env
+  # 禁用思考模式
+  THINKING_MODE=disabled
+  
+  # 启用思考模式
+  THINKING_MODE=enabled
+  
+  # 不设置则不添加该参数（默认行为）
+  THINKING_MODE=
+  ```
+
+#### 模型格式配置
+根据您使用的模型提供商选择对应的配置：
+
+**OpenAI 配置**:
+```env
+API_URL=https://api.openai.com/v1/chat/completions
+API_KEY=sk-your-openai-key
+MODEL_NAME=gpt-4o-mini
+REQUEST_FORMAT=openai
+```
+
+**Anthropic 配置**:
+```env
+API_URL=https://api.anthropic.com/v1/messages
+API_KEY=sk-ant-your-anthropic-key
+MODEL_NAME=claude-3-5-sonnet-20241022
+REQUEST_FORMAT=anthropic
+```
+
+### 完整配置示例
+```env
+# 后台管理
+ADMIN_PASSWORD=your-secure-password-123
+
+# 大模型API配置
+API_URL=https://api.openai.com/v1/chat/completions
+API_KEY=sk-your-api-key-here
+MODEL_NAME=gpt-4o-mini
+REQUEST_FORMAT=openai
+
+# 思考模式配置（可选）
+THINKING_MODE=disabled
+
+# NextAuth配置
+NEXTAUTH_SECRET=your-super-secure-nextauth-secret-key
+NEXTAUTH_URL=http://localhost:3000
+```
 
 ## 📄 许可证
 

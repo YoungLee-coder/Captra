@@ -7,6 +7,7 @@ export const config = {
   apiKey: process.env.API_KEY || '',
   modelName: process.env.MODEL_NAME || 'gpt-4o-mini',
   requestFormat: (process.env.REQUEST_FORMAT as RequestFormat) || 'openai',
+  thinkingMode: process.env.THINKING_MODE || '', // 思考模式，如果为空则不添加该参数
   nextAuthSecret: process.env.NEXTAUTH_SECRET || 'default-secret',
   nextAuthUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000',
 } as const;

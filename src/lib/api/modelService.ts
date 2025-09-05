@@ -51,13 +51,13 @@ export class ModelService {
   }
 
   private async callModel(imageBase64: string): Promise<string> {
-    const { apiUrl, apiKey, modelName, requestFormat } = config;
+    const { apiUrl, apiKey, modelName, requestFormat, thinkingMode } = config;
     
     if (!apiKey) {
       throw new Error('API密钥未配置');
     }
 
-    const requestBody = this.buildRequest(imageBase64, modelName, requestFormat);
+    const requestBody = this.buildRequest(imageBase64, modelName, requestFormat, thinkingMode);
     const headers = this.buildHeaders(requestFormat, apiKey);
 
     const response = await fetch(apiUrl, {
@@ -75,14 +75,14 @@ export class ModelService {
     return this.extractResult(data, requestFormat);
   }
 
-  private buildRequest(imageBase64: string, modelName: string, format: RequestFormat): OpenAIRequest | AnthropicRequest {
+  private buildRequest(imageBase64: string, modelName: string, format: RequestFormat, thinkingMode?: string): OpenAIRequest | AnthropicRequest {
     // 确保base64格式正确
     const base64Image = imageBase64.startsWith('data:') 
       ? imageBase64 
       : `data:image/jpeg;base64,${imageBase64}`;
 
     if (format === 'openai') {
-      return {
+      const request: OpenAIRequest = {
         model: modelName,
         messages: [
           {
@@ -104,11 +104,18 @@ export class ModelService {
         max_tokens: 100,
         temperature: 0.1,
       };
+      
+      // 如果设置了思考模式，添加thinking参数
+      if (thinkingMode && thinkingMode.trim() !== '') {
+        request.thinking = thinkingMode.trim();
+      }
+      
+      return request;
     } else {
       // Anthropic格式
       const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '');
       
-      return {
+      const request: AnthropicRequest = {
         model: modelName,
         max_tokens: 100,
         messages: [
@@ -131,6 +138,13 @@ export class ModelService {
           },
         ],
       };
+      
+      // 如果设置了思考模式，添加thinking参数
+      if (thinkingMode && thinkingMode.trim() !== '') {
+        request.thinking = thinkingMode.trim();
+      }
+      
+      return request;
     }
   }
 
@@ -156,17 +170,62 @@ export class ModelService {
 
   private extractResult(data: unknown, format: RequestFormat): string {
     try {
+      let rawResult = '';
+      
       if (format === 'openai') {
         const openaiData = data as { choices?: Array<{ message?: { content?: string } }> };
-        return openaiData.choices?.[0]?.message?.content || 'UNRECOGNIZABLE';
+        rawResult = openaiData.choices?.[0]?.message?.content || 'UNRECOGNIZABLE';
       } else {
         // Anthropic格式
         const anthropicData = data as { content?: Array<{ text?: string }> };
-        return anthropicData.content?.[0]?.text || 'UNRECOGNIZABLE';
+        rawResult = anthropicData.content?.[0]?.text || 'UNRECOGNIZABLE';
       }
+      
+      // 处理特殊格式的返回结果
+      return this.cleanCaptchaResult(rawResult);
     } catch {
       return 'UNRECOGNIZABLE';
     }
+  }
+
+  private cleanCaptchaResult(result: string): string {
+    if (!result || result === 'UNRECOGNIZABLE') {
+      return 'UNRECOGNIZABLE';
+    }
+
+    // 处理 <|begin_of_box|>...<|end_of_box|> 格式
+    const boxMatch = result.match(/<\|begin_of_box\|>(.*?)<\|end_of_box\|>/);
+    if (boxMatch) {
+      return boxMatch[1].trim();
+    }
+
+    // 处理其他可能的标记格式
+    // 如 [CAPTCHA]...[/CAPTCHA] 或 <captcha>...</captcha> 等
+    const captchaPatterns = [
+      /\[CAPTCHA\](.*?)\[\/CAPTCHA\]/i,
+      /<captcha>(.*?)<\/captcha>/i,
+      /\*\*(.*?)\*\*/,  // **内容**
+      /```(.*?)```/,    // ```内容```
+    ];
+
+    for (const pattern of captchaPatterns) {
+      const match = result.match(pattern);
+      if (match) {
+        return match[1].trim();
+      }
+    }
+
+    // 如果没有匹配到特殊格式，返回原始结果的清理版本
+    // 移除常见的前后缀文本
+    const cleanResult = result
+      .replace(/^(验证码是?[:：]?\s*)/i, '')
+      .replace(/^(the captcha is[:：]?\s*)/i, '')
+      .replace(/^(识别结果是?[:：]?\s*)/i, '')
+      .replace(/^(result[:：]?\s*)/i, '')
+      .replace(/\s*$/, '')
+      .trim();
+
+    return cleanResult || 'UNRECOGNIZABLE';
   }
 
   getModelConfig() {
@@ -174,6 +233,7 @@ export class ModelService {
       apiUrl: config.apiUrl,
       modelName: config.modelName,
       requestFormat: config.requestFormat,
+      thinkingMode: config.thinkingMode || '未设置',
       // 不返回API密钥的完整值，只显示部分
       apiKey: config.apiKey ? `${config.apiKey.slice(0, 8)}...` : '未配置',
     };
