@@ -58,7 +58,7 @@ export interface OpenAIRequest {
   messages: OpenAIMessage[];
   max_tokens?: number;
   temperature?: number;
-  thinking?: string; // 思考模式参数
+  [key: string]: unknown; // 支持任意附加参数
 }
 
 export interface AnthropicMessage {
@@ -78,5 +78,5 @@ export interface AnthropicRequest {
   model: string;
   max_tokens: number;
   messages: AnthropicMessage[];
-  thinking?: string; // 思考模式参数
+  [key: string]: unknown; // 支持任意附加参数
 }

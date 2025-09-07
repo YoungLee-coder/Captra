@@ -1,13 +1,27 @@
 import { RequestFormat } from '@/types';
 import { checkVerificationStatus } from './validationState';
 
+const parseAdditionalParams = (params: string): Record<string, unknown> => {
+  if (!params || params.trim() === '') {
+    return {};
+  }
+  
+  try {
+    // 支持 JSON 格式的附加参数
+    return JSON.parse(params) as Record<string, unknown>;
+  } catch (error) {
+    console.warn('附加参数解析失败，请检查 ADDITIONAL_PARAMS 格式:', error);
+    return {};
+  }
+};
+
 export const config = {
   adminPassword: process.env.ADMIN_PASSWORD || 'admin123',
   apiUrl: process.env.API_URL || 'https://api.openai.com/v1/chat/completions',
   apiKey: process.env.API_KEY || '',
   modelName: process.env.MODEL_NAME || 'gpt-4o-mini',
   requestFormat: (process.env.REQUEST_FORMAT as RequestFormat) || 'openai',
-  thinkingMode: process.env.THINKING_MODE || '', // 思考模式，如果为空则不添加该参数
+  additionalParams: parseAdditionalParams(process.env.ADDITIONAL_PARAMS || ''), // 附加参数，支持JSON格式
   nextAuthSecret: process.env.NEXTAUTH_SECRET || 'default-secret',
   nextAuthUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000',
 } as const;

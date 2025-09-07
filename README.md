@@ -90,25 +90,30 @@
 ### 高级配置
 | 变量名 | 说明 | 默认值 | 示例 |
 |--------|------|--------|------|
-| `THINKING_MODE` | 思考模式参数（可选） | 空 | `disabled`, `enabled` |
+| `ADDITIONAL_PARAMS` | 附加参数（可选） | 空 | `{"thinking": "disabled"}` |
 | `NEXTAUTH_SECRET` | 会话密钥 | `default-secret` | 随机生成的安全字符串 |
 | `NEXTAUTH_URL` | 应用地址 | `http://localhost:3000` | 生产环境的完整域名 |
 
 ### 配置说明
 
-#### 思考模式 (THINKING_MODE)
-- **作用**: 为支持深度思考的模型添加思考模式参数
-- **使用**: 设置后会在 API 请求中添加 `thinking` 字段
+#### 附加参数 (ADDITIONAL_PARAMS)
+- **作用**: 为模型 API 请求添加任意自定义参数
+- **格式**: JSON 字符串格式
+- **使用**: 设置后会将参数合并到 API 请求中
+- **支持参数**: `thinking`、`temperature`、`top_p`、`max_tokens` 等任何模型支持的参数
 - **示例**:
   ```env
-  # 禁用思考模式
-  THINKING_MODE=disabled
+  # 思考模式控制
+  ADDITIONAL_PARAMS={"thinking": "disabled"}
   
-  # 启用思考模式
-  THINKING_MODE=enabled
+  # 多个参数组合
+  ADDITIONAL_PARAMS={"thinking": "disabled", "temperature": 0.5}
   
-  # 不设置则不添加该参数（默认行为）
-  THINKING_MODE=
+  # 覆盖默认参数
+  ADDITIONAL_PARAMS={"temperature": 0.8, "max_tokens": 150}
+  
+  # 不设置则不添加任何附加参数（默认行为）
+  ADDITIONAL_PARAMS=
   ```
 
 #### 模型格式配置
@@ -141,8 +146,8 @@ API_KEY=sk-your-api-key-here
 MODEL_NAME=gpt-4o-mini
 REQUEST_FORMAT=openai
 
-# 思考模式配置（可选）
-THINKING_MODE=disabled
+# 附加参数配置（可选）
+ADDITIONAL_PARAMS={"thinking": "disabled"}
 
 # NextAuth配置
 NEXTAUTH_SECRET=your-super-secure-nextauth-secret-key

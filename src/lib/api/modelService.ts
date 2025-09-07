@@ -51,13 +51,13 @@ export class ModelService {
   }
 
   private async callModel(imageBase64: string): Promise<string> {
-    const { apiUrl, apiKey, modelName, requestFormat, thinkingMode } = config;
+    const { apiUrl, apiKey, modelName, requestFormat, additionalParams } = config;
     
     if (!apiKey) {
       throw new Error('API密钥未配置');
     }
 
-    const requestBody = this.buildRequest(imageBase64, modelName, requestFormat, thinkingMode);
+    const requestBody = this.buildRequest(imageBase64, modelName, requestFormat, additionalParams);
     const headers = this.buildHeaders(requestFormat, apiKey);
 
     const response = await fetch(apiUrl, {
@@ -75,7 +75,7 @@ export class ModelService {
     return this.extractResult(data, requestFormat);
   }
 
-  private buildRequest(imageBase64: string, modelName: string, format: RequestFormat, thinkingMode?: string): OpenAIRequest | AnthropicRequest {
+  private buildRequest(imageBase64: string, modelName: string, format: RequestFormat, additionalParams?: Record<string, unknown>): OpenAIRequest | AnthropicRequest {
     // 确保base64格式正确
     const base64Image = imageBase64.startsWith('data:') 
       ? imageBase64 
@@ -105,9 +105,9 @@ export class ModelService {
         temperature: 0.1,
       };
       
-      // 如果设置了思考模式，添加thinking参数
-      if (thinkingMode && thinkingMode.trim() !== '') {
-        request.thinking = thinkingMode.trim();
+      // 合并附加参数
+      if (additionalParams && Object.keys(additionalParams).length > 0) {
+        Object.assign(request, additionalParams);
       }
       
       return request;
@@ -139,9 +139,9 @@ export class ModelService {
         ],
       };
       
-      // 如果设置了思考模式，添加thinking参数
-      if (thinkingMode && thinkingMode.trim() !== '') {
-        request.thinking = thinkingMode.trim();
+      // 合并附加参数
+      if (additionalParams && Object.keys(additionalParams).length > 0) {
+        Object.assign(request, additionalParams);
       }
       
       return request;
@@ -233,7 +233,9 @@ export class ModelService {
       apiUrl: config.apiUrl,
       modelName: config.modelName,
       requestFormat: config.requestFormat,
-      thinkingMode: config.thinkingMode || '未设置',
+      additionalParams: Object.keys(config.additionalParams).length > 0 
+        ? JSON.stringify(config.additionalParams) 
+        : '未设置',
       // 不返回API密钥的完整值，只显示部分
       apiKey: config.apiKey ? `${config.apiKey.slice(0, 8)}...` : '未配置',
     };
