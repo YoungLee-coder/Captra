@@ -18,7 +18,7 @@
 > **注意**: 部署完成后需要在 Vercel 项目设置中手动添加环境变量。
 
 ### Netlify 部署
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/YoungLee-coder/Captra&env=ADMIN_PASSWORD=admin123,MODEL_NAME=gpt-4o-mini,REQUEST_FORMAT=openai,NEXTAUTH_SECRET=your-nextauth-secret,NEXTAUTH_URL=https://your-site.netlify.app)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/YoungLee-coder/Captra&env=ADMIN_PASSWORD=admin123,MODEL_NAME=gpt-4o-mini,REQUEST_FORMAT=openai,ADDITIONAL_PARAMS={},NEXTAUTH_SECRET=your-nextauth-secret,NEXTAUTH_URL=https://your-site.netlify.app)
 
 > **部署后必须配置**: 在 Netlify 环境变量设置中添加您的 `API_URL` 和 `API_KEY`
 
