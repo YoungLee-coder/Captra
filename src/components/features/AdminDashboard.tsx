@@ -30,6 +30,16 @@ interface ModelConfig {
   apiKey: string;
 }
 
+interface DebugInfo {
+  environment: {
+    isNetlify: boolean;
+    isVercel: boolean;
+    isServerless: boolean;
+    nodeEnv: string;
+  };
+  validationStateSource: string;
+}
+
 import type { TestResult, ConfigValidation } from '@/types';
 
 export function AdminDashboard() {
@@ -38,6 +48,7 @@ export function AdminDashboard() {
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [testing, setTesting] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
 
   useEffect(() => {
     loadConfig();
@@ -51,6 +62,7 @@ export function AdminDashboard() {
       if (result.success) {
         setConfig(result.config);
         setValidation(result.validation);
+        setDebugInfo(result.debug);
       }
     } catch (error) {
       console.error('加载配置失败:', error);
@@ -247,6 +259,47 @@ export function AdminDashboard() {
                       </div>
                     )}
                   </div>
+
+                  {/* 调试信息 */}
+                  {debugInfo && (
+                    <>
+                      <Separator />
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-3 block">环境信息</label>
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">部署平台:</span>
+                              <span className="font-mono">
+                                {debugInfo.environment.isNetlify ? 'Netlify' : 
+                                 debugInfo.environment.isVercel ? 'Vercel' : 
+                                 debugInfo.environment.isServerless ? 'Serverless' : 'Standard'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">环境:</span>
+                              <span className="font-mono">{debugInfo.environment.nodeEnv}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">状态存储:</span>
+                              <span className="font-mono">{debugInfo.validationStateSource}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">无服务器:</span>
+                              <span className={`font-mono ${debugInfo.environment.isServerless ? 'text-blue-600' : 'text-gray-600'}`}>
+                                {debugInfo.environment.isServerless ? '是' : '否'}
+                              </span>
+                            </div>
+                          </div>
+                          {debugInfo.environment.isServerless && (
+                            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
+                              <strong>注意:</strong> 在无服务器环境中，验证状态仅在当前会话中保持。重新部署后需要重新测试。
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </CardContent>

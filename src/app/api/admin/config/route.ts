@@ -32,6 +32,14 @@ export async function GET(request: NextRequest) {
     const configValidation = validateConfig();
     const lastTestResult = getLastTestResult();
     
+    // 添加环境信息用于调试
+    const environmentInfo = {
+      isNetlify: !!process.env.NETLIFY,
+      isVercel: !!process.env.VERCEL,
+      isServerless: !!(process.env.NETLIFY || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME),
+      nodeEnv: process.env.NODE_ENV,
+    };
+    
     return NextResponse.json({
       success: true,
       config: modelConfig,
@@ -39,6 +47,10 @@ export async function GET(request: NextRequest) {
         ...configValidation,
         lastTestTime: lastTestResult.lastTestTime,
         lastTestResult: lastTestResult.lastTestResult,
+      },
+      debug: {
+        environment: environmentInfo,
+        validationStateSource: lastTestResult.lastTestTime > 0 ? 'stored' : 'default',
       },
     });
   } catch (error) {

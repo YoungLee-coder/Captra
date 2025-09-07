@@ -12,6 +12,11 @@ interface ValidationState {
   };
 }
 
+// 全局内存存储（适用于无服务器环境）
+declare global {
+  var __captraValidationState: ValidationState | undefined;
+}
+
 // 验证状态文件路径
 const VALIDATION_STATE_FILE = join(process.cwd(), '.validation-state.json');
 
@@ -21,25 +26,56 @@ const DEFAULT_STATE: ValidationState = {
   lastTestTime: 0,
 };
 
+// 检查是否为无服务器环境（如Netlify、Vercel）
+function isServerlessEnvironment(): boolean {
+  return !!(
+    process.env.NETLIFY || 
+    process.env.VERCEL || 
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.FUNCTION_NAME
+  );
+}
+
 // 读取验证状态
 function readValidationState(): ValidationState {
+  // 优先从内存读取（适用于无服务器环境）
+  if (globalThis.__captraValidationState) {
+    return globalThis.__captraValidationState;
+  }
+
+  // 如果是无服务器环境，直接返回默认状态
+  if (isServerlessEnvironment()) {
+    return DEFAULT_STATE;
+  }
+
+  // 尝试从文件读取（适用于传统服务器环境）
   try {
     if (existsSync(VALIDATION_STATE_FILE)) {
       const data = readFileSync(VALIDATION_STATE_FILE, 'utf-8');
-      return JSON.parse(data) as ValidationState;
+      const state = JSON.parse(data) as ValidationState;
+      // 同时缓存到内存
+      globalThis.__captraValidationState = state;
+      return state;
     }
   } catch (error) {
-    console.warn('读取验证状态文件失败:', error);
+    console.warn('读取验证状态文件失败，使用内存存储:', error);
   }
+  
   return DEFAULT_STATE;
 }
 
 // 写入验证状态
 function writeValidationState(state: ValidationState): void {
-  try {
-    writeFileSync(VALIDATION_STATE_FILE, JSON.stringify(state, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('写入验证状态文件失败:', error);
+  // 始终写入内存（适用于所有环境）
+  globalThis.__captraValidationState = state;
+
+  // 如果不是无服务器环境，尝试写入文件
+  if (!isServerlessEnvironment()) {
+    try {
+      writeFileSync(VALIDATION_STATE_FILE, JSON.stringify(state, null, 2), 'utf-8');
+    } catch (error) {
+      console.warn('写入验证状态文件失败，仅使用内存存储:', error);
+    }
   }
 }
 
