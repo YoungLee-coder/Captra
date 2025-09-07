@@ -57,18 +57,21 @@ export async function POST(request: NextRequest) {
     
     const result = await modelService.recognizeCaptcha(testImage);
     
-    // 如果测试成功，标记配置为已验证
-    if (result.success) {
-      markAsVerified();
-    }
+    // 构建测试结果
+    const testResult = {
+      success: result.success,
+      recognizedText: result.result,
+      processingTime: result.processingTime,
+      error: result.error,
+    };
+    
+    // 更新验证状态（无论成功还是失败都记录）
+    markAsVerified(testResult);
     
     return NextResponse.json({
       success: true,
       testResult: {
-        success: result.success,
-        recognizedText: result.result, // 将result字段映射为recognizedText
-        processingTime: result.processingTime,
-        error: result.error,
+        ...testResult,
         originalImage: `data:image/png;base64,${testImage}`,
       },
     });

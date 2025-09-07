@@ -30,6 +30,13 @@ export interface ConfigValidation {
   isValid: boolean;
   errors: string[];
   status: 'pending' | 'failed' | 'verified'; // pending: 待验证, failed: 配置错误, verified: 已验证通过
+  lastTestTime?: number; // 最后一次测试时间戳
+  lastTestResult?: {
+    success: boolean;
+    recognizedText?: string;
+    processingTime?: number;
+    error?: string;
+  };
 }
 
 export interface TestResult {
